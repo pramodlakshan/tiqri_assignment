@@ -1,0 +1,9 @@
+{
+	"name": "Tiqri-assignment-dev",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "836684e1-781f-45da-a565-8026f418e03f",
+		"tenantId": "6da938fc-4103-4992-b3fa-27b5dd34f6f9"
+	}
+}
