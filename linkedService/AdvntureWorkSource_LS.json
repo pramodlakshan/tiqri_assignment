@@ -1,0 +1,17 @@
+{
+	"name": "AdvntureWorkSource_LS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=True;data source=DESKTOP-UT9P933;initial catalog=AdventureWorks2019",
+			"userName": "DESKTOP-UT9P933\\Nilanka",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI4OTA2MzQzMy04MDRhLTQ1NWEtOTg2MS1mMDc4MGJmYTU2YzYiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "SH-AdventureWorkTiqri-IR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
