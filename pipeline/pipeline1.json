@@ -1,6 +1,125 @@
 {
 	"name": "pipeline1",
 	"properties": {
+		"activities": [
+			{
+				"name": "LookupOldWaterMarkActivitySalesOrderDetail",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select LastRunCheckpoint from dbo.SalesOrderDetailCheackPointTable",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "LookupNewWaterMarkActivitySalesOrderDetail",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select MAX(ModifiedDate) as NewWatermarkvalue from Sales.SalesOrderDetail",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupNewWaterMarkActivitySalesOrderDetail",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "LookupOldWaterMarkActivitySalesOrderDetail",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT\nSD.SalesOrderDetailID AS SalesOrderDetailID,\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.Status AS Status,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nSH.DueDate AS DueDate,\nSH.ShipDate AS ShipDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSH.TaxAmt AS SalesOrderTaxAmount,\nSH.Freight AS SalesOrderFreighAmount,\nSH.TotalDue AS SalesOrderTotalDueAmount,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".csv"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "SalesTargetDS",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
 		"annotations": []
 	}
 }
