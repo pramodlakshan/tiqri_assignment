@@ -118,7 +118,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "SalesTargetDS",
+						"referenceName": "SalesOrderDetailsDS",
 						"type": "DatasetReference"
 					}
 				]
@@ -282,7 +282,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "SalesTargetDS",
+						"referenceName": "SalesTerritoryDetailsDS",
 						"type": "DatasetReference"
 					}
 				]
@@ -472,7 +472,7 @@
 							"type": "DateTime"
 						},
 						"TableName": {
-							"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.TableName}",
+							"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}",
 							"type": "String"
 						}
 					}
