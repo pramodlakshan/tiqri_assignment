@@ -146,11 +146,333 @@
 					"storedProcedureName": "[dbo].[usp_write_watermark_SalesOrderDetail]",
 					"storedProcedureParameters": {
 						"ModifiedDate": {
-							"value": "@{activity('LookupNewWaterMarkActivity').output.firstRow.NewWatermarkvalue}",
+							"value": {
+								"value": "@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}",
+								"type": "Expression"
+							},
 							"type": "DateTime"
 						},
 						"TableName": {
-							"value": "@{activity('LookupOldWaterMarkActivity').output.firstRow.TableName}",
+							"value": {
+								"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LookupOldWaterMarkActivityTerritory",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select LastRunCheckpoint from dbo.cheackPointTable",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "LookupNewWaterMarkActivityTerritory",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select MAX(ModifiedDate) as NewWatermarkvalue from Sales.SalesTerritory",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "DataCopytoTerritory",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupOldWaterMarkActivityTerritory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "LookupNewWaterMarkActivityTerritory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "SELECT\nTerritoryID AS TerritoryID,\nName AS Territory,\nCountryRegionCode AS CountryRegionCode,\nModifiedDate AS SalesTerritoryModifiedDateTs\nFROM Sales.SalesTerritory\nWHERE ModifiedDate > '@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}' and ModifiedDate <= '@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}'\n",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".csv"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "SalesTargetDS",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Update-TerritoryCheackPointTable",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "DataCopytoTerritory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_write_watermark]",
+					"storedProcedureParameters": {
+						"ModifiedDate": {
+							"value": "@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}",
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LookupOldWaterMarkActivityProduct",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select LastRunCheckpoint from dbo.productCheackPointTable",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "LookupNewWaterMarkActivityProduct",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select MAX(ModifiedDate) as NewWatermarkvalue from Production.Product",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "DataCopytoProduct",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupOldWaterMarkActivityProduct",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "LookupNewWaterMarkActivityProduct",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "SELECT\nP.ProductID AS ProductID,\nP.[Name] AS ProductName,\nISNULL(PC.[Name],'N/A') AS ProductCategory,\nISNULL(PSC.[Name],'N/A') AS ProductSubCategory,\nP.ProductNumber AS ProductNumber,\nP.SafetyStockLevel AS SafetyStockLevel,\nP.StandardCost AS StandardCost,\nP.ListPrice AS ListPrice,\nP.ModifiedDate AS ProductModifiedTs,\nPC.ModifiedDate AS ProductCategoryModifiedTs,\nPSC.ModifiedDate AS ProductSubcategoryModifiedTs\nFROM Production.Product P\nLEFT JOIN Production.ProductSubcategory PSC ON P.ProductSubcategoryID = PSC.ProductSubcategoryID\nLEFT JOIN Production.ProductCategory PC ON PSC.ProductCategoryID = PC.ProductCategoryID\nWHERE P.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and P.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PSC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PSC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\n",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".csv"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AdventureWorksSourceDS",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ProductDetailsDS",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Update-ProductCheackPointTable",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "DataCopytoProduct",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_write_watermark_product]",
+					"storedProcedureParameters": {
+						"ModifiedDate": {
+							"value": "@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}",
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.TableName}",
 							"type": "String"
 						}
 					}
