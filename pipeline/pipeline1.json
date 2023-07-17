@@ -55,7 +55,7 @@
 				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "DataCopytoSalesOrderDetail",
 				"type": "Copy",
 				"dependsOn": [
 					{
@@ -82,7 +82,10 @@
 				"typeProperties": {
 					"source": {
 						"type": "SqlServerSource",
-						"sqlReaderQuery": "SELECT\nSD.SalesOrderDetailID AS SalesOrderDetailID,\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.Status AS Status,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nSH.DueDate AS DueDate,\nSH.ShipDate AS ShipDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSH.TaxAmt AS SalesOrderTaxAmount,\nSH.Freight AS SalesOrderFreighAmount,\nSH.TotalDue AS SalesOrderTotalDueAmount,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
+						"sqlReaderQuery": {
+							"value": "SELECT\nSD.SalesOrderDetailID AS SalesOrderDetailID,\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.Status AS Status,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nSH.DueDate AS DueDate,\nSH.ShipDate AS ShipDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSH.TaxAmt AS SalesOrderTaxAmount,\nSH.Freight AS SalesOrderFreighAmount,\nSH.TotalDue AS SalesOrderTotalDueAmount,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
+							"type": "Expression"
+						},
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
@@ -121,11 +124,11 @@
 				]
 			},
 			{
-				"name": "Stored procedure1",
+				"name": "Update-SalesOrderDetailCheackPointTable",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
-						"activity": "Copy data1",
+						"activity": "DataCopytoSalesOrderDetail",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -138,7 +141,24 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_write_watermark_SalesOrderDetail]",
+					"storedProcedureParameters": {
+						"ModifiedDate": {
+							"value": "@{activity('LookupNewWaterMarkActivity').output.firstRow.NewWatermarkvalue}",
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": "@{activity('LookupOldWaterMarkActivity').output.firstRow.TableName}",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"annotations": []
