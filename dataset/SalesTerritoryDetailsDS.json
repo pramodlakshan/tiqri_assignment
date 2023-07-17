@@ -1,5 +1,5 @@
 {
-	"name": "SalesTargetDS",
+	"name": "SalesTerritoryDetailsDS",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "TargetDatalake_LS",
@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "SalesTerritory",
+				"fileName": "SalesTerritoryDetails",
 				"fileSystem": "adventureworksdata"
 			},
 			"columnDelimiter": ",",
