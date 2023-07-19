@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "SalesTerritoryDetails",
+				"fileName": "SalesTerritoryDetails.csv",
 				"fileSystem": "adventureworksdata"
 			},
 			"columnDelimiter": ",",
