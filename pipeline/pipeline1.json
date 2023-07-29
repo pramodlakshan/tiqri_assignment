@@ -83,7 +83,7 @@
 					"source": {
 						"type": "SqlServerSource",
 						"sqlReaderQuery": {
-							"value": "SELECT\nSD.SalesOrderDetailID AS SalesOrderDetailID,\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.Status AS Status,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nSH.DueDate AS DueDate,\nSH.ShipDate AS ShipDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSH.TaxAmt AS SalesOrderTaxAmount,\nSH.Freight AS SalesOrderFreighAmount,\nSH.TotalDue AS SalesOrderTotalDueAmount,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
+							"value": "SELECT\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
@@ -247,7 +247,7 @@
 					"source": {
 						"type": "SqlServerSource",
 						"sqlReaderQuery": {
-							"value": "SELECT\nTerritoryID AS TerritoryID,\nName AS Territory,\nCountryRegionCode AS CountryRegionCode,\nModifiedDate AS SalesTerritoryModifiedDateTs\nFROM Sales.SalesTerritory\nWHERE ModifiedDate > '@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}' and ModifiedDate <= '@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}'\n",
+							"value": "SELECT\nName AS Territory,\nCountryRegionCode AS CountryRegionCode,\nModifiedDate AS SalesTerritoryModifiedDateTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs,\nROW_NUMBER() OVER (ORDER BY TerritoryID) AS TerritoryKey\nFROM Sales.SalesTerritory\nWHERE ModifiedDate > '@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}' and ModifiedDate <= '@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}'\n",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
@@ -310,11 +310,17 @@
 					"storedProcedureName": "[dbo].[usp_write_watermark]",
 					"storedProcedureParameters": {
 						"ModifiedDate": {
-							"value": "@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}",
+							"value": {
+								"value": "@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}",
+								"type": "Expression"
+							},
 							"type": "DateTime"
 						},
 						"TableName": {
-							"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}",
+							"value": {
+								"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}",
+								"type": "Expression"
+							},
 							"type": "String"
 						}
 					}
@@ -405,7 +411,7 @@
 					"source": {
 						"type": "SqlServerSource",
 						"sqlReaderQuery": {
-							"value": "SELECT\nP.ProductID AS ProductID,\nP.[Name] AS ProductName,\nISNULL(PC.[Name],'N/A') AS ProductCategory,\nISNULL(PSC.[Name],'N/A') AS ProductSubCategory,\nP.ProductNumber AS ProductNumber,\nP.SafetyStockLevel AS SafetyStockLevel,\nP.StandardCost AS StandardCost,\nP.ListPrice AS ListPrice,\nP.ModifiedDate AS ProductModifiedTs,\nPC.ModifiedDate AS ProductCategoryModifiedTs,\nPSC.ModifiedDate AS ProductSubcategoryModifiedTs\nFROM Production.Product P\nLEFT JOIN Production.ProductSubcategory PSC ON P.ProductSubcategoryID = PSC.ProductSubcategoryID\nLEFT JOIN Production.ProductCategory PC ON PSC.ProductCategoryID = PC.ProductCategoryID\nWHERE P.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and P.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PSC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PSC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\n",
+							"value": "SELECT\nP.ProductID AS ProductID,\nP.[Name] AS ProductName,\nPC.[Name]  AS ProductCategory,\nPSC.[Name]  AS ProductSubCategory,\nP.ProductNumber AS ProductNumber,\nP.StandardCost AS StandardCost,\nP.ListPrice AS ListPrice,\nP.ModifiedDate AS ProductModifiedTs,\nPC.ModifiedDate AS ProductCategoryModifiedTs,\nPSC.ModifiedDate AS ProductSubcategoryModifiedTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs\nFROM Production.Product P\nJOIN Production.ProductSubcategory PSC ON P.ProductSubcategoryID = PSC.ProductSubcategoryID\nJOIN Production.ProductCategory PC ON PSC.ProductCategoryID = PC.ProductCategoryID\nWHERE P.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and P.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PSC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PSC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\n",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
@@ -468,11 +474,17 @@
 					"storedProcedureName": "[dbo].[usp_write_watermark_product]",
 					"storedProcedureParameters": {
 						"ModifiedDate": {
-							"value": "@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}",
+							"value": {
+								"value": "@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}",
+								"type": "Expression"
+							},
 							"type": "DateTime"
 						},
 						"TableName": {
-							"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}",
+							"value": {
+								"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}",
+								"type": "Expression"
+							},
 							"type": "String"
 						}
 					}
