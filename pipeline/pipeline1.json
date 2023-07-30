@@ -22,7 +22,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "AdventureWorksSourceDS",
+						"referenceName": "WatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -48,7 +48,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "AdventureWorksSourceDS",
+						"referenceName": "WatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -154,7 +154,7 @@
 						},
 						"TableName": {
 							"value": {
-								"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}",
+								"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.data_source_table}",
 								"type": "Expression"
 							},
 							"type": "String"

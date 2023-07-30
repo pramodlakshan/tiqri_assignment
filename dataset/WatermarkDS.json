@@ -1,0 +1,12 @@
+{
+	"name": "WatermarkDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvntureWorkSource_LS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	}
+}
