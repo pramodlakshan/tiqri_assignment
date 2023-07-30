@@ -92,10 +92,7 @@
 						"type": "DelimitedTextSink",
 						"storeSettings": {
 							"type": "AzureBlobFSWriteSettings",
-							"copyBehavior": {
-								"value": "@CONCAT(pipeline().RunId, '.csv')",
-								"type": "Expression"
-							}
+							"copyBehavior": "PreserveHierarchy"
 						},
 						"formatSettings": {
 							"type": "DelimitedTextWriteSettings",
