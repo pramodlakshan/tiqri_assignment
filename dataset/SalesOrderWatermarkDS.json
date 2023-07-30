@@ -1,5 +1,5 @@
 {
-	"name": "WatermarkDS",
+	"name": "SalesOrderWatermarkDS",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AdvntureWorkSource_LS",
@@ -7,6 +7,10 @@
 		},
 		"annotations": [],
 		"type": "SqlServerTable",
-		"schema": []
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "SalesOrderDetailCheackPointTable"
+		}
 	}
 }

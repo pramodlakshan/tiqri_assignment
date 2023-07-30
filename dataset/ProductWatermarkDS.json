@@ -1,0 +1,27 @@
+{
+	"name": "ProductWatermarkDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvntureWorkSource_LS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "TableName",
+				"type": "varchar"
+			},
+			{
+				"name": "LastRunCheckpoint",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "productCheackPointTable"
+		}
+	}
+}

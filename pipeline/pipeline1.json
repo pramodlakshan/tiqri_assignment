@@ -21,7 +21,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "WatermarkDS",
+						"referenceName": "SalesOrderWatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -47,7 +47,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "WatermarkDS",
+						"referenceName": "SalesOrderWatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -153,7 +153,7 @@
 						},
 						"TableName": {
 							"value": {
-								"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.data_source_table}",
+								"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.TableName}",
 								"type": "Expression"
 							},
 							"type": "String"
@@ -180,12 +180,11 @@
 				"typeProperties": {
 					"source": {
 						"type": "SqlServerSource",
-						"sqlReaderQuery": "select LastRunCheckpoint from dbo.cheackPointTable",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "AdventureWorksSourceDS",
+						"referenceName": "TerritoryWatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -317,7 +316,7 @@
 						},
 						"TableName": {
 							"value": {
-								"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}",
+								"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.TableName}",
 								"type": "Expression"
 							},
 							"type": "String"
@@ -344,12 +343,11 @@
 				"typeProperties": {
 					"source": {
 						"type": "SqlServerSource",
-						"sqlReaderQuery": "select LastRunCheckpoint from dbo.productCheackPointTable",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "AdventureWorksSourceDS",
+						"referenceName": "ProductWatermarkDS",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -481,7 +479,7 @@
 						},
 						"TableName": {
 							"value": {
-								"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}",
+								"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.TableName}",
 								"type": "Expression"
 							},
 							"type": "String"
