@@ -1,5 +1,5 @@
 {
-	"name": "SalesTerritoryDetailsDS",
+	"name": "TerritoryDetailsDS",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "TargetDatalake_LS",
@@ -10,7 +10,10 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "SalesTerritoryDetails.csv",
+				"fileName": {
+					"value": "@CONCAT('TerritoryDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
+					"type": "Expression"
+				},
 				"fileSystem": "adventureworksdata"
 			},
 			"columnDelimiter": ",",

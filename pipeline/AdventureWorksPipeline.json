@@ -281,7 +281,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "SalesTerritoryDetailsDS",
+						"referenceName": "TerritoryDetailsDS",
 						"type": "DatasetReference"
 					}
 				]

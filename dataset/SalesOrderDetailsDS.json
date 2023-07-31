@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AzureBlobFSLocation",
 				"fileName": {
-					"value": "@CONCAT('SalesOrderDetails-', pipeline().RunId, '.csv')",
+					"value": "@CONCAT('SalesOrderDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
 					"type": "Expression"
 				},
 				"fileSystem": "adventureworksdata"

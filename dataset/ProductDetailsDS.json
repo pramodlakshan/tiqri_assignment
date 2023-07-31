@@ -10,7 +10,10 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "ProductDetails.csv",
+				"fileName": {
+					"value": "@CONCAT('ProductDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
+					"type": "Expression"
+				},
 				"fileSystem": "adventureworksdata"
 			},
 			"columnDelimiter": ",",
