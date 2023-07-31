@@ -1,5 +1,5 @@
 {
-	"name": "SalesOrderDetailsDS",
+	"name": "SalesOrderDetailsTargetDS",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "TargetDatalake_LS",

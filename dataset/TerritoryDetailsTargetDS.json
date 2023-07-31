@@ -1,5 +1,5 @@
 {
-	"name": "TerritoryDetailsDS",
+	"name": "TerritoryDetailsTargetDS",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "TargetDatalake_LS",
