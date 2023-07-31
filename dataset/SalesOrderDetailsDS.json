@@ -10,12 +10,14 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "SalesOrderDetails.csv",
-				"fileSystem": "adventureworksdata"
+				"fileSystem": {
+					"value": "@CONCAT('adventureworksdata-', pipeline().RunId, '.csv')",
+					"type": "Expression"
+				}
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
-			"firstRowAsHeader": true,
+			"firstRowAsHeader": false,
 			"quoteChar": "\""
 		},
 		"schema": []
