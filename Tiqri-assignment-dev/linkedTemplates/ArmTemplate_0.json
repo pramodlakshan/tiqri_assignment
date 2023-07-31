@@ -61,7 +61,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ProductDetailsDS')]",
+			"name": "[concat(parameters('factoryName'), '/ProductDetailsTargetDS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -74,7 +74,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "ProductDetails",
+						"fileName": {
+							"value": "@CONCAT('ProductDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
+							"type": "Expression"
+						},
 						"fileSystem": "adventureworksdata"
 					},
 					"columnDelimiter": ",",
@@ -89,7 +92,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SalesOrderDetailsDS')]",
+			"name": "[concat(parameters('factoryName'), '/SalesOrderDetailsTargetDS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -102,12 +105,15 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "SalesOrderDetails",
+						"fileName": {
+							"value": "@CONCAT('SalesOrderDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
+							"type": "Expression"
+						},
 						"fileSystem": "adventureworksdata"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
-					"firstRowAsHeader": true,
+					"firstRowAsHeader": false,
 					"quoteChar": "\""
 				},
 				"schema": []
@@ -117,7 +123,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SalesTerritoryDetailsDS')]",
+			"name": "[concat(parameters('factoryName'), '/TerritoryDetailsTargetDS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -130,7 +136,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "SalesTerritoryDetails",
+						"fileName": {
+							"value": "@CONCAT('TerritoryDetails-', formatDateTime(convertTimeZone(utcnow(),'UTC','Eastern Standard Time'),'yyyy-MM-ddTHH:mm:ss'), '.csv')",
+							"type": "Expression"
+						},
 						"fileSystem": "adventureworksdata"
 					},
 					"columnDelimiter": ",",
@@ -190,7 +199,92 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"name": "[concat(parameters('factoryName'), '/ProductWatermarkDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "TableName",
+						"type": "varchar"
+					},
+					{
+						"name": "LastRunCheckpoint",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "productCheackPointTable"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AdvntureWorkSource_LS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SalesOrderWatermarkDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "SalesOrderDetailCheackPointTable"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AdvntureWorkSource_LS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TerritoryWatermarkDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AdvntureWorkSource_LS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "TableName",
+						"type": "varchar"
+					},
+					{
+						"name": "LastRunCheckpoint",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "cheackPointTable"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AdvntureWorkSource_LS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AdventureWorksPipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -210,12 +304,11 @@
 						"typeProperties": {
 							"source": {
 								"type": "SqlServerSource",
-								"sqlReaderQuery": "select LastRunCheckpoint from dbo.SalesOrderDetailCheackPointTable",
 								"queryTimeout": "02:00:00",
 								"partitionOption": "None"
 							},
 							"dataset": {
-								"referenceName": "AdventureWorksSourceDS",
+								"referenceName": "SalesOrderWatermarkDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -242,7 +335,7 @@
 								"partitionOption": "None"
 							},
 							"dataset": {
-								"referenceName": "AdventureWorksSourceDS",
+								"referenceName": "SalesOrderWatermarkDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -278,7 +371,7 @@
 							"source": {
 								"type": "SqlServerSource",
 								"sqlReaderQuery": {
-									"value": "SELECT\nSD.SalesOrderDetailID AS SalesOrderDetailID,\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.Status AS Status,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nSH.DueDate AS DueDate,\nSH.ShipDate AS ShipDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSH.TaxAmt AS SalesOrderTaxAmount,\nSH.Freight AS SalesOrderFreighAmount,\nSH.TotalDue AS SalesOrderTotalDueAmount,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
+									"value": "SELECT\nSH.SalesOrderID AS SalesOrderID,\nSD.ProductID AS ProductKey,\nSH.TerritoryID AS TerritoryKey,\nSH.OrderDate AS OrderDate,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.OrderDate,112)) AS SalesOrderDateKey,\nCONVERT(INT, CONVERT(VARCHAR(8),SH.DueDate,112)) AS SalesOrderDueDateKey,\nSD.OrderQty,\nSD.UnitPrice,\nSD.UnitPriceDiscount,\nSD.LineTotal,\nSH.SubTotal AS SalesOrderSubTotal,\nSD.ModifiedDate AS SalesOrderDetailModifiedTs,\nSH.ModifiedDate AS SalesOrderDateModifiedTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs\nFROM Sales.SalesOrderDetail SD\n\tLEFT JOIN Sales.SalesOrderHeader SH ON SD.SalesOrderID = SH.SalesOrderID\nWHERE SD.ModifiedDate > '@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}' and SD.ModifiedDate <= '@{activity('LookupNewWaterMarkActivitySalesOrderDetail').output.firstRow.NewWatermarkvalue}'\n",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
@@ -314,7 +407,7 @@
 						],
 						"outputs": [
 							{
-								"referenceName": "SalesOrderDetailsDS",
+								"referenceName": "SalesOrderDetailsTargetDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -351,7 +444,7 @@
 								},
 								"TableName": {
 									"value": {
-										"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.LastRunCheckpoint}",
+										"value": "@{activity('LookupOldWaterMarkActivitySalesOrderDetail').output.firstRow.TableName}",
 										"type": "Expression"
 									},
 									"type": "String"
@@ -378,12 +471,11 @@
 						"typeProperties": {
 							"source": {
 								"type": "SqlServerSource",
-								"sqlReaderQuery": "select LastRunCheckpoint from dbo.cheackPointTable",
 								"queryTimeout": "02:00:00",
 								"partitionOption": "None"
 							},
 							"dataset": {
-								"referenceName": "AdventureWorksSourceDS",
+								"referenceName": "TerritoryWatermarkDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -446,7 +538,7 @@
 							"source": {
 								"type": "SqlServerSource",
 								"sqlReaderQuery": {
-									"value": "SELECT\nTerritoryID AS TerritoryID,\nName AS Territory,\nCountryRegionCode AS CountryRegionCode,\nModifiedDate AS SalesTerritoryModifiedDateTs\nFROM Sales.SalesTerritory\nWHERE ModifiedDate > '@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}' and ModifiedDate <= '@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}'\n",
+									"value": "SELECT\nName AS Territory,\nCountryRegionCode AS CountryRegionCode,\nModifiedDate AS SalesTerritoryModifiedDateTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs,\nROW_NUMBER() OVER (ORDER BY TerritoryID) AS TerritoryKey\nFROM Sales.SalesTerritory\nWHERE ModifiedDate > '@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}' and ModifiedDate <= '@{activity('LookupNewWaterMarkActivityTerritory').output.firstRow.NewWatermarkvalue}'\n",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
@@ -482,7 +574,7 @@
 						],
 						"outputs": [
 							{
-								"referenceName": "SalesTerritoryDetailsDS",
+								"referenceName": "TerritoryDetailsTargetDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -519,7 +611,7 @@
 								},
 								"TableName": {
 									"value": {
-										"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.LastRunCheckpoint}",
+										"value": "@{activity('LookupOldWaterMarkActivityTerritory').output.firstRow.TableName}",
 										"type": "Expression"
 									},
 									"type": "String"
@@ -546,12 +638,11 @@
 						"typeProperties": {
 							"source": {
 								"type": "SqlServerSource",
-								"sqlReaderQuery": "select LastRunCheckpoint from dbo.productCheackPointTable",
 								"queryTimeout": "02:00:00",
 								"partitionOption": "None"
 							},
 							"dataset": {
-								"referenceName": "AdventureWorksSourceDS",
+								"referenceName": "ProductWatermarkDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -614,7 +705,7 @@
 							"source": {
 								"type": "SqlServerSource",
 								"sqlReaderQuery": {
-									"value": "SELECT\nP.ProductID AS ProductID,\nP.[Name] AS ProductName,\nISNULL(PC.[Name],'N/A') AS ProductCategory,\nISNULL(PSC.[Name],'N/A') AS ProductSubCategory,\nP.ProductNumber AS ProductNumber,\nP.SafetyStockLevel AS SafetyStockLevel,\nP.StandardCost AS StandardCost,\nP.ListPrice AS ListPrice,\nP.ModifiedDate AS ProductModifiedTs,\nPC.ModifiedDate AS ProductCategoryModifiedTs,\nPSC.ModifiedDate AS ProductSubcategoryModifiedTs\nFROM Production.Product P\nLEFT JOIN Production.ProductSubcategory PSC ON P.ProductSubcategoryID = PSC.ProductSubcategoryID\nLEFT JOIN Production.ProductCategory PC ON PSC.ProductCategoryID = PC.ProductCategoryID\nWHERE P.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and P.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PSC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PSC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\n",
+									"value": "SELECT\nP.ProductID AS ProductID,\nP.[Name] AS ProductName,\nISNULL(PC.[Name],'Other') AS ProductCategory,\nISNULL(PSC.[Name],'Miscellaneous') AS ProductSubCategory,\nP.ProductNumber AS ProductNumber,\nP.SafetyStockLevel AS SafetyStockLevel,\nP.StandardCost AS StandardCost,\nP.ListPrice AS ListPrice,\nP.ModifiedDate AS ProductModifiedTs,\nPC.ModifiedDate AS ProductCategoryModifiedTs,\nPSC.ModifiedDate AS ProductSubcategoryModifiedTs,\nCURRENT_TIMESTAMP AS PipelineUpdateTs\nFROM Production.Product P\nLEFT JOIN Production.ProductSubcategory PSC ON P.ProductSubcategoryID = PSC.ProductSubcategoryID\nLEFT JOIN Production.ProductCategory PC ON PSC.ProductCategoryID = PC.ProductCategoryID\nWHERE P.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and P.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\nOR PSC.ModifiedDate > '@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}' and PSC.ModifiedDate <= '@{activity('LookupNewWaterMarkActivityProduct').output.firstRow.NewWatermarkvalue}'\n",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
@@ -650,7 +741,7 @@
 						],
 						"outputs": [
 							{
-								"referenceName": "ProductDetailsDS",
+								"referenceName": "ProductDetailsTargetDS",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -687,7 +778,7 @@
 								},
 								"TableName": {
 									"value": {
-										"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.LastRunCheckpoint}",
+										"value": "@{activity('LookupOldWaterMarkActivityProduct').output.firstRow.TableName}",
 										"type": "Expression"
 									},
 									"type": "String"
@@ -707,11 +798,14 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SalesOrderWatermarkDS')]",
 				"[concat(variables('factoryId'), '/datasets/AdventureWorksSourceDS')]",
-				"[concat(variables('factoryId'), '/datasets/SalesOrderDetailsDS')]",
+				"[concat(variables('factoryId'), '/datasets/SalesOrderDetailsTargetDS')]",
 				"[concat(variables('factoryId'), '/linkedServices/AdvntureWorkSource_LS')]",
-				"[concat(variables('factoryId'), '/datasets/SalesTerritoryDetailsDS')]",
-				"[concat(variables('factoryId'), '/datasets/ProductDetailsDS')]"
+				"[concat(variables('factoryId'), '/datasets/TerritoryWatermarkDS')]",
+				"[concat(variables('factoryId'), '/datasets/TerritoryDetailsTargetDS')]",
+				"[concat(variables('factoryId'), '/datasets/ProductWatermarkDS')]",
+				"[concat(variables('factoryId'), '/datasets/ProductDetailsTargetDS')]"
 			]
 		}
 	]
