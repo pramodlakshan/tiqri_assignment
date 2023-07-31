@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AzureBlobFSLocation",
 				"fileSystem": {
-					"value": "@CONCAT('adventureworksdata-', pipeline().RunId, '.csv')",
+					"value": "@CONCAT('adventureworksdata', pipeline().RunId, '.csv')",
 					"type": "Expression"
 				}
 			},
